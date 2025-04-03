@@ -1,4 +1,4 @@
-// Function to collect form data
+
 function collectFormData() {
   const formData = {
     full_name: document.getElementById("fullName").value,
@@ -11,7 +11,6 @@ function collectFormData() {
     skills: [],
   };
 
-  // Collect education entries
   document.querySelectorAll(".education-entry").forEach((entry) => {
     const inputs = entry.querySelectorAll("input");
     formData.education.push({
@@ -24,7 +23,6 @@ function collectFormData() {
     });
   });
 
-  // Collect experience entries
   document.querySelectorAll(".experience-entry").forEach((entry) => {
     const inputs = entry.querySelectorAll("input, textarea");
     formData.experience.push({
@@ -36,7 +34,7 @@ function collectFormData() {
     });
   });
 
-  // Collect skills
+
   document.querySelectorAll("#skillsContainer .row").forEach((entry) => {
     const inputs = entry.querySelectorAll("input, select");
     formData.skills.push({
@@ -48,7 +46,7 @@ function collectFormData() {
   return formData;
 }
 
-// Function to update preview
+
 function updatePreview() {
   const formData = collectFormData();
   const preview = document.getElementById("resumePreview");
@@ -108,7 +106,7 @@ function updatePreview() {
   preview.innerHTML = previewHTML;
 }
 
-// Add event listeners for real-time preview
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("resumeForm");
   const inputs = form.querySelectorAll("input, textarea, select");
