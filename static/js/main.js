@@ -1,4 +1,3 @@
-
 function collectFormData() {
   const formData = {
     full_name: document.getElementById("fullName").value,
@@ -34,7 +33,6 @@ function collectFormData() {
     });
   });
 
-
   document.querySelectorAll("#skillsContainer .row").forEach((entry) => {
     const inputs = entry.querySelectorAll("input, select");
     formData.skills.push({
@@ -45,7 +43,6 @@ function collectFormData() {
 
   return formData;
 }
-
 
 function updatePreview() {
   const formData = collectFormData();
@@ -106,7 +103,6 @@ function updatePreview() {
   preview.innerHTML = previewHTML;
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("resumeForm");
   const inputs = form.querySelectorAll("input, textarea, select");
@@ -139,4 +135,197 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Error saving resume: " + error.message);
     }
   });
+
+  // Add suggestion buttons to each section
+  const sections = [
+    "Personal Information",
+    "Professional Summary",
+    "Education",
+    "Work Experience",
+    "Skills",
+  ];
+  sections.forEach((section) => {
+    const sectionElement = document.querySelector(
+      `.resume-section:has(h3:contains('${section}'))`
+    );
+    if (sectionElement) {
+      const suggestionButton = document.createElement("button");
+      suggestionButton.className = "btn btn-outline-info btn-sm float-end";
+      suggestionButton.innerHTML =
+        '<i class="fas fa-robot"></i> Get AI Suggestions';
+      suggestionButton.onclick = async () => {
+        let content = "";
+        switch (section) {
+          case "Personal Information":
+            content = `Name: ${document.getElementById("fullName").value}
+Email: ${document.getElementById("email").value}
+Phone: ${document.getElementById("phone").value}
+Address: ${document.getElementById("address").value}`;
+            break;
+          case "Professional Summary":
+            content = document.getElementById("summary").value;
+            break;
+          case "Education":
+            const educationEntries =
+              document.querySelectorAll(".education-entry");
+            content = Array.from(educationEntries)
+              .map((entry) => {
+                const inputs = entry.querySelectorAll("input");
+                return `Institution: ${inputs[0].value}
+Degree: ${inputs[1].value}
+Field: ${inputs[2].value}
+GPA: ${inputs[3].value}
+Period: ${inputs[4].value} - ${inputs[5].value}`;
+              })
+              .join("\n\n");
+            break;
+          case "Work Experience":
+            const experienceEntries =
+              document.querySelectorAll(".experience-entry");
+            content = Array.from(experienceEntries)
+              .map((entry) => {
+                const inputs = entry.querySelectorAll("input, textarea");
+                return `Company: ${inputs[0].value}
+Position: ${inputs[1].value}
+Period: ${inputs[2].value} - ${inputs[3].value}
+Description: ${inputs[4].value}`;
+              })
+              .join("\n\n");
+            break;
+          case "Skills":
+            const skillEntries = document.querySelectorAll(
+              "#skillsContainer .row"
+            );
+            content = Array.from(skillEntries)
+              .map((entry) => {
+                const inputs = entry.querySelectorAll("input, select");
+                return `${inputs[0].value} (${inputs[1].value})`;
+              })
+              .join("\n");
+            break;
+        }
+
+        const suggestions = await getSuggestions(section, content);
+        if (suggestions) {
+          showSuggestions(
+            section,
+            suggestions.suggestions,
+            suggestions.improved_content
+          );
+        }
+      };
+      sectionElement.querySelector("h3").appendChild(suggestionButton);
+    }
+  });
 });
+
+// Function to get AI suggestions
+async function getSuggestions(section, content) {
+  try {
+    const response = await fetch("/api/suggestions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        section: section,
+        content: content,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get suggestions");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error getting suggestions:", error);
+    return null;
+  }
+}
+
+// Function to show suggestions
+function showSuggestions(section, suggestions, improvedContent) {
+  const suggestionsContainer = document.createElement("div");
+  suggestionsContainer.className = "suggestions-container mt-3";
+
+  let suggestionsHTML = `
+      <div class="card">
+          <div class="card-header">
+              <h5 class="mb-0">AI Suggestions for ${section}</h5>
+          </div>
+          <div class="card-body">
+              <h6>Suggestions:</h6>
+              <ul class="list-unstyled">
+                  ${suggestions
+                    .map(
+                      (suggestion) => `
+                      <li><i class="fas fa-lightbulb text-warning"></i> ${suggestion}</li>
+                  `
+                    )
+                    .join("")}
+              </ul>
+  `;
+
+  if (improvedContent) {
+    suggestionsHTML += `
+          <h6 class="mt-3">Improved Version:</h6>
+          <div class="improved-content p-3 bg-light rounded">
+              ${improvedContent}
+          </div>
+          <button class="btn btn-sm btn-primary mt-2" onclick="applyImprovedContent('${section}')">
+              <i class="fas fa-check"></i> Apply Improved Version
+          </button>
+    `;
+  }
+
+  suggestionsHTML += `
+      </div>
+  </div>
+  `;
+
+  suggestionsContainer.innerHTML = suggestionsHTML;
+
+  // Remove existing suggestions if any
+  const existingSuggestions = document.querySelector(".suggestions-container");
+  if (existingSuggestions) {
+    existingSuggestions.remove();
+  }
+
+  // Add new suggestions after the section
+  const sectionElement = document.querySelector(
+    `.resume-section:has(h3:contains('${section}'))`
+  );
+  if (sectionElement) {
+    sectionElement.appendChild(suggestionsContainer);
+  }
+}
+
+// Function to apply improved content
+function applyImprovedContent(section) {
+  const improvedContent =
+    document.querySelector(".improved-content").textContent;
+  let targetElement;
+
+  switch (section) {
+    case "Professional Summary":
+      targetElement = document.getElementById("summary");
+      break;
+    case "Education":
+      targetElement = document.querySelector(
+        ".education-entry:last-child textarea"
+      );
+      break;
+    case "Work Experience":
+      targetElement = document.querySelector(
+        ".experience-entry:last-child textarea"
+      );
+      break;
+  }
+
+  if (targetElement) {
+    targetElement.value = improvedContent;
+    updatePreview();
+  }
+}

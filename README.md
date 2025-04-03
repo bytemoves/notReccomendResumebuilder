@@ -1,6 +1,7 @@
 # Resume Builder
 
-A modern web application for creating and managing professional resumes. Built with FastAPI and a clean, responsive frontend.Built with FastAPI
+A modern web application for creating and managing professional resumes.Built with FastAPI
+Port it to react or vue
 
 ## Features
 
